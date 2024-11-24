@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use tokio::sync::mpsc;
 
 use crate::protocol::PeerCmd;
@@ -21,7 +23,6 @@ pub enum InternalEvent {
 	}
 }
 
-
 pub enum InternalCommand {
 	Bind {
 		addr: String
@@ -33,4 +34,22 @@ pub enum InternalCommand {
 		addr: String,
 		cmd: PeerCmd
 	}
+}
+
+#[derive(Debug, Default)]
+pub struct Peer {
+	pub id: String,
+	pub name: String,
+	pub owner: Option<String>,
+	pub introduced: bool,
+}
+
+#[derive(Debug, Default)]
+pub struct State {
+	pub me: Peer,
+	pub peers: HashMap<String, Peer>
+}
+
+impl State {
+
 }

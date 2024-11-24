@@ -107,12 +107,12 @@ impl<'a> ByteEater<'a> {
 	}
 }
 
-pub struct PupynetProtocol {
+pub struct PupynetParser {
 	buffer: Vec<u8>,
 	cmds: VecDeque<PeerCmd>,
 }
 
-impl PupynetProtocol {
+impl PupynetParser {
 	pub fn new() -> Self {
 		Self {
 			buffer: Vec::new(),

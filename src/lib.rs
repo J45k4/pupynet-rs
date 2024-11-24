@@ -7,12 +7,12 @@ mod ws;
 mod types;
 mod protocol;
 mod worker;
+mod udp;
 
 #[derive(Debug, Clone)]
 pub enum PupynetEvent {
 	PeerConnected {
-		addr: String,
-		tx: tokio::sync::mpsc::UnboundedSender<types::PeerConnCmd>
+		addr: String
 	},
 	PeerDisconnected {
 		addr: String
@@ -36,7 +36,7 @@ impl Pupynet {
 		{
 			let event_tx = event_tx.clone();
 			tokio::spawn(async move {
-				Worker::new(rx, event_tx).run().await;
+				Worker::new(rx, event_tx).await.run().await;
 			});
 		}
 

@@ -6,7 +6,7 @@ use tokio_tungstenite::accept_async;
 use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::WebSocketStream;
-use crate::protocol::PupynetProtocol;
+use crate::protocol::PupynetParser;
 use crate::types::PeerConnCmd;
 use crate::PupynetEvent;
 
@@ -14,7 +14,7 @@ async fn handle_ws<T>(mut ws: WebSocketStream<T>, addr: String, event_tx: mpsc::
 where 
 	T: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin
 {
-	let mut protocol = PupynetProtocol::new();
+	let mut protocol = PupynetParser::new();
 	loop {
 		tokio::select! {
 			msg = ws.next() => {

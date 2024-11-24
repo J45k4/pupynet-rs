@@ -1,0 +1,8 @@
+[package]
+name = "pupynet"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+pupynet_core = { path = "../" }
+tokio = { version = "1" }

@@ -33,14 +33,14 @@ impl Worker {
 		}
 	}
 
-	async fn send(&self, addr: &str, cmd: PeerCmd) {
+	async fn send(&self, addr: &str, cmd: PeerCmd) -> anyhow::Result<()> {
 		if addr.starts_with("udp://") {
 			let addr = addr.trim_start_matches("udp://");
 			self.udp_socket.send_to(&cmd.serialize(), &addr).await.unwrap();
-			return;
+			return Ok(());
 		}
 
-		
+		Ok(())
 	}
 
 	async fn handle_cmd(&mut self, cmd: InternalCommand) {

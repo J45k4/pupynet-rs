@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 log = "0.4"
-tokio = { version = "1", features = ["net", "macros", "rt-multi-thread", "sync"] }
-tokio-tungstenite = "*"
+tokio = { version = "1", features = ["net", "macros", "rt-multi-thread", "sync", "fs"] }
+fastwebsockets = "*"
 futures-util = "*"
 anyhow = "*"

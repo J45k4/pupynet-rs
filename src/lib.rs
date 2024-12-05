@@ -8,6 +8,7 @@ mod types;
 mod protocol;
 mod worker;
 mod udp;
+mod stream;
 
 #[derive(Debug, Clone)]
 pub enum PupynetEvent {

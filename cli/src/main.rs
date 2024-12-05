@@ -24,6 +24,8 @@ async fn main() {
 	match cmd {
 		Command::Gui => {
 			iced::application("Pupynet", App::update, App::view)
+				.subscription(f)
+				.
 				.run_with(App::new)
 				.unwrap();
 		}

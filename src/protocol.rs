@@ -1,12 +1,26 @@
 use std::collections::VecDeque;
 
+use tokio::io::AsyncSeekExt;
+use tokio::io::AsyncWriteExt;
+use tokio::io::BufReader;
+
 pub const INTRODUCE_CMD: u16 = 1;
-pub const WRITE_FILE_CMD: u16 = 2;
-pub const READ_FILE_CMD: u16 = 3;
-pub const REMOVE_FILE_CMD: u16 = 4;
-pub const CREATE_FOLDER_CMD: u16 = 5;
-pub const RENAME_FOLDER_CMD: u16 = 6;
-pub const LIST_FOLDER_CONTENTS_CMD: u16 = 7;
+pub const CMD_WRITE_FILE: u16 = 2;
+pub const CMD_READ_FILE: u16 = 3;
+pub const CMD_REMOVE: u16 = 4;
+pub const CMD_CREATE_FOLDER: u16 = 5;
+pub const CMD_MOVE: u16 = 6;
+pub const CMD_LIST_FOLDER_CONTENTS: u16 = 7;
+pub const CMD_PEER_CONNECTED: u16 = 8;
+pub const CMD_PEER_DISCONNECTED: u16 = 9;
+pub const CMD_EXECUTE: u16 = 10;
+pub const CMD_FORGET_PEER: u16 = 11;
+
+pub const STREAM_START: u8 = 0x01;
+pub const STREAM_END: u8 = 0x02;
+pub const STREAM_CONTINUE: u8 = 0x03;
+pub const STREAM_PAUSE: u8 = 0x04;
+pub const STREAM_PULL: u8 = 0x05;
 
 #[derive(Debug)]
 pub struct Introduce {
@@ -157,4 +171,3 @@ impl PupynetParser {
 		self.cmds.pop_front()
 	}
 }
-

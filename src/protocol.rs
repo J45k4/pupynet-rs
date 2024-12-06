@@ -22,6 +22,9 @@ pub const STREAM_CONTINUE: u8 = 0x03;
 pub const STREAM_PAUSE: u8 = 0x04;
 pub const STREAM_PULL: u8 = 0x05;
 
+pub const SUCCES: u8 = 0x00;
+pub const ERR_REMOVE_FOLDER_RECURSIVE_NOT_ENABLED: u8 = 0x01;
+
 #[derive(Debug)]
 pub struct Introduce {
 	pub id: String,

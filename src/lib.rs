@@ -3,7 +3,7 @@ use tokio::sync::mpsc;
 use types::InternalCommand;
 use worker::Worker;
 
-mod ws;
+//mod ws;
 mod types;
 mod protocol;
 mod worker;

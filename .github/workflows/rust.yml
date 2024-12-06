@@ -33,5 +33,5 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/')
       uses: actions/upload-artifact@v4
       with:
-        name: my_binary
-        path: target/release/my_binary
+        name: pupynet
+        path: target/release/pupynet

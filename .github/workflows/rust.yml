@@ -13,6 +13,9 @@ on:
 permissions:
   contents: write  # Required for creating releases
 
+env:
+  PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -25,7 +28,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Fetch all history to ensure all branches and tags are available
+          fetch-depth: 0
 
       # 2. Cache Cargo dependencies
       - name: Cache Cargo registry
@@ -60,18 +63,36 @@ jobs:
       - name: Test
         run: cargo test --release
 
-      # 6. Package the binary (Windows)
+      # 6. Sign the binary
+      # For Windows
+      - name: Sign Binary (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $Env:PRIVATE_KEY | Out-File -FilePath private_key.pem -Encoding ASCII
+          openssl dgst -sha256 -sign private_key.pem -out target\release\pupynet.sig target\release\pupynet.exe
+          Remove-Item private_key.pem
+
+      # For Unix (Linux/MacOS)
+      - name: Sign Binary (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          echo "$PRIVATE_KEY" > private_key.pem
+          openssl dgst -sha256 -sign private_key.pem -out target/release/pupynet.sig target/release/pupynet
+          rm private_key.pem
+
+      # 7. Package the binary (Windows)
       - name: Package Binary (Windows)
         if: matrix.os == 'windows-latest'
         id: package_windows
         shell: pwsh
         run: |
-          $binaryName = "pupynet.exe"  # Replace with your binary name
+          $binaryName = "pupynet.exe"
           $archiveName = "$($binaryName)-${{ github.ref_name }}-windows.zip"
-          Compress-Archive -Path "target\\release\\$binaryName" -DestinationPath "$archiveName"
+          Compress-Archive -Path "target\release\$binaryName","target\release\pupynet.sig" -DestinationPath "$archiveName"
           echo "artifact_name=$archiveName" >> $env:GITHUB_OUTPUT
 
-      # 7. Package the binary (Unix)
+      # 8. Package the binary (Unix)
       - name: Package Binary (Unix)
         if: matrix.os != 'windows-latest'
         id: package_unix
@@ -81,12 +102,13 @@ jobs:
           else
             ARCHIVE_SUFFIX="linux.tar.gz"
           fi
-          BINARY_NAME="pupynet"  # Replace with your binary name
+          BINARY_NAME="pupynet"
           ARCHIVE_NAME="$BINARY_NAME-${{ github.ref_name }}-$ARCHIVE_SUFFIX"
-          tar -czf "$ARCHIVE_NAME" -C target/release "$BINARY_NAME"
+          # Include pupynet and pupynet.sig in the archive
+          tar -czf "$ARCHIVE_NAME" -C target/release "$BINARY_NAME" "pupynet.sig"
           echo "artifact_name=$ARCHIVE_NAME" >> $GITHUB_OUTPUT
 
-      # 8. Upload the packaged binary as an artifact
+      # 9. Upload the packaged binary as an artifact
       - name: Upload Artifact (Windows)
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v3

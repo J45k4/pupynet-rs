@@ -8,11 +8,13 @@ use args::Command;
 use pupynet_core::Pupynet;
 use clap::Parser;
 use reqwest::header;
+use reqwest::Url;
 use serde_json::Value;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
 mod args;
+mod update;
 
 pub fn get_version() -> u32 {
     match option_env!("VERSION") {
@@ -39,7 +41,15 @@ fn app_dir() -> PathBuf {
 	path
 }
 
-async fn fetch_latest_release() -> anyhow::Result<()> {
+fn bin_dir() -> PathBuf {
+    let path = app_dir().join("bin");
+    if !path.exists() {
+        std::fs::create_dir_all(&path).unwrap();
+    }
+    path
+}
+
+async fn fetch_latest_release() -> anyhow::Result<PathBuf> {
     let client = reqwest::Client::new();
     let res = client
         .get("https://api.github.com/repos/j45k4/pupynet-rs/releases/latest")
@@ -109,6 +119,18 @@ async fn fetch_latest_release() -> anyhow::Result<()> {
     log::info!("Successfully downloaded and saved: {}", path.display());
 
     Ok(())
+}
+
+async fn dowload_bin(url: Url, filename: &str) -> anyhow::Result<PathBuf> {
+    let res = reqwest::get(url).await?;
+    if !res.status().is_success() {
+        bail!("Failed to download asset. HTTP status: {}", res.status());
+    }
+    let bytes = res.bytes().await?;
+    let path = app_dir().join(&filename);
+    let mut file = File::create(&path).await?;
+    file.write_all(&bytes).await?;
+    Ok(path)
 }
 
 #[tokio::main]

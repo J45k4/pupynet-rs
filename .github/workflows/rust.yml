@@ -1,37 +1,130 @@
-name: Rust
+name: Rust CI/CD
+
 on:
   push:
     branches:
       - main
     tags:
-      - '*'
+      - '*'   # Trigger on all tag pushes
   pull_request:
     branches:
       - main
+
+permissions:
+  contents: write  # Required for creating releases
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      # 1. Checkout the repository with full history
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history to ensure all branches and tags are available
 
-    - name: Set up Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        profile: minimal
-        override: true
+      # 2. Cache Cargo dependencies
+      - name: Cache Cargo registry
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
 
-    - name: Build
-      run: cargo build --release --verbose -p pupynet
+      - name: Cache Cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-
 
-    - name: Run tests
-      run: cargo test --verbose
+      # 3. Set up Rust toolchain
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
 
-    - name: Upload binary if tagged
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: actions/upload-artifact@v4
-      with:
-        name: pupynet
-        path: target/release/pupynet
+      # 4. Build the project in release mode
+      - name: Build
+        run: cargo build --release
+
+      # 5. Run tests
+      - name: Test
+        run: cargo test --release
+
+      # 6. Package the binary (Windows)
+      - name: Package Binary (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $binaryName = "your_binary_name.exe"  # Replace with your binary name
+          $archiveName = "$($binaryName)-${{ github.ref_name }}-windows.zip"
+          Compress-Archive -Path "target\\release\\$binaryName" -DestinationPath "$archiveName"
+          echo "artifact_name=$archiveName" >> $env:GITHUB_OUTPUT
+
+      # 7. Package the binary (Unix)
+      - name: Package Binary (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            ARCHIVE_SUFFIX="macos.tar.gz"
+          else
+            ARCHIVE_SUFFIX="linux.tar.gz"
+          fi
+          BINARY_NAME="your_binary_name"  # Replace with your binary name
+          ARCHIVE_NAME="$BINARY_NAME-${{ github.ref_name }}-$ARCHIVE_SUFFIX"
+          tar -czf "$ARCHIVE_NAME" -C target/release "$BINARY_NAME"
+          echo "artifact_name=$ARCHIVE_NAME" >> $GITHUB_OUTPUT
+
+      # 8. Upload the packaged binary as an artifact
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ runner.os }}
+          path: ${{ steps.Package_Binary.outputs.artifact_name }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')  # Ensure it's a tag push
+
+    steps:
+      # 1. Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # 2. Download all artifacts from build job
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts/
+
+      # 3. Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 4. Upload Release Assets
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -3,12 +3,12 @@ name: Rust CI/CD
 on:
   push:
     branches:
-      - master
+      - main
     tags:
       - '*'   # Trigger on all tag pushes
   pull_request:
     branches:
-      - master
+      - main
 
 permissions:
   contents: write  # Required for creating releases
@@ -44,15 +44,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-build-
 
-      # 3. Set up Rust toolchain with rustflags
+      # 3. Set up Rust toolchain
       - name: Set up Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rs/toolchain@v1
         with:
-          rustflags: -A unused_imports  # Disable warnings for unused imports
+          toolchain: stable
+          profile: minimal
+          override: true
 
       # 4. Build the project in release mode
       - name: Build
-        run: cargo build --release - pupynet
+        run: cargo build --release -p pupynet
 
       # 5. Run tests
       - name: Test
@@ -64,11 +66,10 @@ jobs:
         id: package_windows
         shell: pwsh
         run: |
-          $binaryName = "pupynet.exe"
-          $archiveName = "pupynet-${{ github.ref_name }}-windows.zip"
-          $binaryPath = "target/release/$binaryName"
-          Compress-Archive -Path $binaryPath -DestinationPath $archiveName -Force
-          Write-Output "artifact_path=$archiveName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8
+          $binaryName = "pupynet.exe"  # Replace with your binary name
+          $archiveName = "$($binaryName)-${{ github.ref_name }}-windows.zip"
+          Compress-Archive -Path "target\\release\\$binaryName" -DestinationPath "$archiveName"
+          echo "artifact_name=$archiveName" >> $env:GITHUB_OUTPUT
 
       # 7. Package the binary (Unix)
       - name: Package Binary (Unix)
@@ -80,25 +81,25 @@ jobs:
           else
             ARCHIVE_SUFFIX="linux.tar.gz"
           fi
-          BINARY_NAME="pupynet"
-          ARCHIVE_NAME="pupynet-${{ github.ref_name }}-${ARCHIVE_SUFFIX}"
+          BINARY_NAME="pupynet"  # Replace with your binary name
+          ARCHIVE_NAME="$BINARY_NAME-${{ github.ref_name }}-$ARCHIVE_SUFFIX"
           tar -czf "$ARCHIVE_NAME" -C target/release "$BINARY_NAME"
-          echo "artifact_path=$ARCHIVE_NAME" >> $GITHUB_OUTPUT
+          echo "artifact_name=$ARCHIVE_NAME" >> $GITHUB_OUTPUT
 
       # 8. Upload the packaged binary as an artifact
       - name: Upload Artifact (Windows)
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v3
         with:
-          name: pupynet-${{ matrix.os }}
-          path: ${{ steps.package_windows.outputs.artifact_path }}
+          name: windows
+          path: ${{ steps.package_windows.outputs.artifact_name }}
 
       - name: Upload Artifact (Unix)
         if: matrix.os != 'windows-latest'
         uses: actions/upload-artifact@v3
         with:
-          name: pupynet-${{ matrix.os }}
-          path: ${{ steps.package_unix.outputs.artifact_path }}
+          name: ${{ matrix.os }}
+          path: ${{ steps.package_unix.outputs.artifact_name }}
 
   release:
     needs: build
@@ -106,30 +107,17 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')  # Ensure it's a tag push
 
     steps:
-      # 1. Checkout the repository (optional)
+      # 1. Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      # 2. Download all artifacts from build jobs
-      - name: Download Linux Artifact
+      # 2. Download all artifacts from build job
+      - name: Download Artifacts
         uses: actions/download-artifact@v3
         with:
-          name: pupynet-ubuntu-latest
-          path: artifacts/linux/
-
-      - name: Download Windows Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: pupynet-windows-latest
-          path: artifacts/windows/
-
-      - name: Download macOS Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: pupynet-macos-latest
-          path: artifacts/macos/
+          path: artifacts/
 
       # 3. Create GitHub Release
       - name: Create GitHub Release
@@ -138,37 +126,6 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # 4. Upload Release Assets (Linux)
-      - name: Upload Release Asset (Linux)
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: pupynet-${{ github.ref_name }}-linux.tar.gz
-          files: artifacts/linux/pupynet-${{ github.ref_name }}-linux.tar.gz
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # 5. Upload Release Asset (Windows)
-      - name: Upload Release Asset (Windows)
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: pupynet-${{ github.ref_name }}-windows.zip
-          files: artifacts/windows/pupynet-${{ github.ref_name }}-windows.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # 6. Upload Release Asset (macOS)
-      - name: Upload Release Asset (macOS)
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: pupynet-${{ github.ref_name }}-macos.tar.gz
-          files: artifacts/macos/pupynet-${{ github.ref_name }}-macos.tar.gz
+          files: artifacts/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

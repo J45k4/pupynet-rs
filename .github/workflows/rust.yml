@@ -57,6 +57,8 @@ jobs:
 
       # 4. Build the project in release mode
       - name: Build
+        env:
+          VERSION: ${{ github.ref_name }}
         run: cargo build --release -p pupynet
 
       # 5. Run tests

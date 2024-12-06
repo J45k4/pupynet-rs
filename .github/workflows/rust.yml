@@ -24,7 +24,7 @@ jobs:
         override: true
 
     - name: Build
-      run: cargo build --release --verbose
+      run: cargo build --release --verbose -p pupynet
 
     - name: Run tests
       run: cargo test --verbose

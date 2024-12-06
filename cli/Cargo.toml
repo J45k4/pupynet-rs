@@ -7,4 +7,3 @@ edition = "2021"
 pupynet_core = { path = "../" }
 tokio = { version = "1" }
 clap = { version = "4", features = ["derive"] }
-iced = "0.13"

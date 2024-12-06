@@ -54,7 +54,7 @@ jobs:
 
       # 4. Build the project in release mode
       - name: Build
-        run: cargo build --release
+        run: cargo build --release -p pupynet
 
       # 5. Run tests
       - name: Test
@@ -65,7 +65,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          $binaryName = "your_binary_name.exe"  # Replace with your binary name
+          $binaryName = "pupynet.exe"  # Replace with your binary name
           $archiveName = "$($binaryName)-${{ github.ref_name }}-windows.zip"
           Compress-Archive -Path "target\\release\\$binaryName" -DestinationPath "$archiveName"
           echo "artifact_name=$archiveName" >> $env:GITHUB_OUTPUT
@@ -79,7 +79,7 @@ jobs:
           else
             ARCHIVE_SUFFIX="linux.tar.gz"
           fi
-          BINARY_NAME="your_binary_name"  # Replace with your binary name
+          BINARY_NAME="pupynet"  # Replace with your binary name
           ARCHIVE_NAME="$BINARY_NAME-${{ github.ref_name }}-$ARCHIVE_SUFFIX"
           tar -czf "$ARCHIVE_NAME" -C target/release "$BINARY_NAME"
           echo "artifact_name=$ARCHIVE_NAME" >> $GITHUB_OUTPUT

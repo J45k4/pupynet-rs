@@ -22,6 +22,7 @@ use tar::Archive;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use rsa::signature::Verifier;
+use tokio::sync::mpsc;
 
 mod args;
 
@@ -196,4 +197,17 @@ async fn main() {
 			
 		}
 	}
+
+	let (tx, mut rx) = mpsc::channel::<[u8; 1024]>(10); // 10 slots for fixed-size arrays
+
+    tokio::spawn(async move {
+        for i in 0..20 {
+            let data = [i as u8; 1024]; // Reuse static allocation
+            tx.send(data).await.unwrap();
+        }
+    });
+
+    while let Some(data) = rx.recv().await {
+        println!("Received: {:?}", data[0]); // Prints first byte of each message
+    }
 }

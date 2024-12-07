@@ -3,11 +3,7 @@ use tokio::io::AsyncSeekExt;
 use tokio::io::AsyncWriteExt;
 use tokio::io::BufReader;
 
-use crate::protocol::CMD_CREATE_FOLDER;
-use crate::protocol::CMD_READ_FILE;
-use crate::protocol::CMD_REMOVE;
-use crate::protocol::CMD_WRITE_FILE;
-use crate::protocol::ERR_REMOVE_FOLDER_RECURSIVE_NOT_ENABLED;
+use crate::protocol::*;
 
 // struct Parser {
 // 	stream_id: u64,
@@ -18,8 +14,12 @@ use crate::protocol::ERR_REMOVE_FOLDER_RECURSIVE_NOT_ENABLED;
 
 // }
 
-struct Stream {
+pub trait Transport {
 
+}
+
+struct Stream {
+	transport: Box<dyn Transport>
 }
 
 impl Stream {

@@ -9,6 +9,8 @@ mod protocol;
 mod worker;
 mod udp;
 mod stream;
+mod multiplex;
+mod tcp;
 
 #[derive(Debug, Clone)]
 pub enum PupynetEvent {
@@ -49,7 +51,15 @@ impl Pupynet {
 	}
 
 	pub fn bind(&self, addr: String) {
+		if addr.starts_with("ws://") {
 
+		}
+	}
+
+	pub fn connect(&self, addr: String) {
+		if addr.starts_with("ws://") {
+			self.tx.send(InternalCommand::Connect { addr }).unwrap();
+		}
 	}
 
 	pub async fn next(&mut self) -> Option<PupynetEvent> {

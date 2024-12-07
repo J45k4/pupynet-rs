@@ -9,6 +9,9 @@ edition = "2021"
 [dependencies]
 log = "0.4"
 tokio = { version = "1", features = ["net", "macros", "rt-multi-thread", "sync", "fs"] }
-fastwebsockets = "*"
+fastwebsockets = { version = "*", features = ["upgrade"] }
 futures-util = "*"
 anyhow = "*"
+hyper-util = "0.1"
+hyper = { version = "1" }
+http-body-util = "0.1"

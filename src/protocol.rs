@@ -1,9 +1,3 @@
-use std::collections::VecDeque;
-
-use tokio::io::AsyncSeekExt;
-use tokio::io::AsyncWriteExt;
-use tokio::io::BufReader;
-
 pub const INTRODUCE_CMD: u16 = 1;
 pub const CMD_WRITE_FILE: u16 = 2;
 pub const CMD_READ_FILE: u16 = 3;
@@ -21,6 +15,7 @@ pub const STREAM_END: u8 = 0x02;
 pub const STREAM_CONTINUE: u8 = 0x03;
 pub const STREAM_PAUSE: u8 = 0x04;
 pub const STREAM_PULL: u8 = 0x05;
+pub const STREAM_DIED: u8 = 0x06;
 
 pub const SUCCES: u8 = 0x00;
 pub const ERR_REMOVE_FOLDER_RECURSIVE_NOT_ENABLED: u8 = 0x01;
@@ -121,56 +116,5 @@ impl<'a> ByteEater<'a> {
 		let s = self.buffer[2..len as usize + 2].to_vec();
 		self.buffer = &self.buffer[len as usize + 2..];
 		String::from_utf8(s).unwrap()
-	}
-}
-
-pub struct PupynetParser {
-	buffer: Vec<u8>,
-	cmds: VecDeque<PeerCmd>,
-}
-
-impl PupynetParser {
-	pub fn new() -> Self {
-		Self {
-			buffer: Vec::new(),
-			cmds: VecDeque::new(),
-		}
-	}
-
-	pub fn parse(&mut self, data: &[u8]) {
-		self.buffer.extend_from_slice(data);
-		if self.buffer.len() < 6 {
-			return;
-		}
-		let cmd = u16::from_le_bytes(self.buffer[0..2].try_into().unwrap());
-		let len = u32::from_le_bytes(self.buffer[2..6].try_into().unwrap()) as u32;
-		log::info!("received cmd: {}, len: {}", cmd, len);
-		if self.buffer.len() < len as usize + 6 {
-			return;
-		}
-		let mut eater = ByteEater::new(&self.buffer[6..]);
-		match cmd {
-			INTRODUCE_CMD => {
-				log::info!("INTRODUCE_CMD");
-				let id = eater.get_string();
-				let name = eater.get_string();
-				let owner = eater.get_string();
-				self.cmds.push_back(PeerCmd::Introduce(
-					Introduce {
-						id,
-						name,
-						owner,
-					}
-				));
-			}
-			WRITE_FILE_CMD => {}
-			READ_FILE_CMD => {}
-			REMOVE_FILE_CMD => {}
-			_ => {}
-		}
-	}
-
-	pub fn next(&mut self) -> Option<PeerCmd> {
-		self.cmds.pop_front()
 	}
 }

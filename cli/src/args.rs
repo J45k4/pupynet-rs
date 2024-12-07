@@ -18,5 +18,6 @@ pub struct Args {
 #[derive(Debug, Parser)]
 pub enum Command {
 	Copy { src: String, dest: String },
-	Update
+	Update,
+	Verify { bin: String, sig: String },
 }

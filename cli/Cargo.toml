@@ -13,3 +13,7 @@ anyhow = "1"
 homedir = "0.3"
 log = "0.4"
 simple_logger = "5"
+flate2 = "1.0"
+tar = "0.4"
+rsa = { version = "0.9.7", features = ["pem"] }
+sha2 = { version = "0.10", features = ["oid"] }

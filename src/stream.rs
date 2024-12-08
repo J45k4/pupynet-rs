@@ -111,7 +111,7 @@ async fn handle_create_folder(stream: &mut Stream) -> anyhow::Result<()> {
 	Ok(())
 }
 
-async fn handle_stream(mut stream: Stream) -> anyhow::Result<()> {
+pub async fn handle_stream(mut stream: Stream) -> anyhow::Result<()> {
 	let cmd_type = stream.read_u16().await;
 	match cmd_type {
 		// INTRODUCE_CMD => {

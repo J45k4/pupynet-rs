@@ -53,3 +53,13 @@ pub struct State {
 impl State {
 
 }
+
+pub struct Context {
+
+}
+
+impl Clone for Context {
+	fn clone(&self) -> Self {
+		Context {}
+	}
+}

@@ -11,6 +11,7 @@ mod udp;
 mod stream;
 mod multiplex;
 mod tcp;
+mod connection;
 
 #[derive(Debug, Clone)]
 pub enum PupynetEvent {
